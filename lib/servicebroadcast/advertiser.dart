@@ -15,6 +15,7 @@ class AdvertiseService{
   advertise() {
     RawDatagramSocket.bind(InternetAddress.anyIPv6, 0).then((socket){
       this._rawDatagramSocket = socket;
+      this._rawDatagramSocket.broadcastEnabled = true;
       this._rawDatagramSocket.readEventsEnabled = true;
       this._rawDatagramSocket.listen((RawSocketEvent event) {
         if(event == RawSocketEvent.read){

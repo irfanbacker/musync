@@ -38,21 +38,3 @@ class DiscoverService{
 abstract class FoundServiceCallback{
   foundService(String host,int port);
 }
-
-main() =>
-    // UDP client
-RawDatagramSocket.bind(InternetAddress.anyIPv4, 0).then((datagramSocket) {
-  datagramSocket.broadcastEnabled = true;
-  datagramSocket.readEventsEnabled = true;
-  datagramSocket.listen((RawSocketEvent event) {
-    if (event == RawSocketEvent.read) {
-      Datagram dg = datagramSocket.receive();
-      if (dg != null) {
-        print('${dg.address.host}:${dg.port} -- ${utf8.decode(dg.data)}');
-        //datagramSocket.close();
-      }
-    }
-  });
-  datagramSocket.send("io.irfan.musync.service".codeUnits,
-      InternetAddress("255.255.255.255"), 1567);
-});
