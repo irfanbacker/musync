@@ -21,6 +21,7 @@ class AdvertiseService{
         if(event == RawSocketEvent.read){
           Datagram datagram = this._rawDatagramSocket.receive();
           if(datagram != null){
+            print(datagram.address.address);
             _foundPeerCallback.foundPeer(datagram.address.address, datagram.port);
           }
         }
