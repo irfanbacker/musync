@@ -1,26 +1,40 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:musync/nsd_service.dart';
+import 'package:musync/spotifyservice.dart';
+import 'package:musync/widgets/musicPlayer.dart';
 
-class NsdHost extends StatefulWidget {
-  String deviceName;
-  int port;
-  String serviceType;
-  String serviceName;
+class MusyncHost extends StatefulWidget {
+  final String deviceName;
+  final int port;
+  final String serviceType;
+  final String serviceName;
 
-  NsdHost({@required this.deviceName, @required this.port, this.serviceType, this.serviceName});
+  MusyncHost(
+      {@required this.deviceName,
+      @required this.port,
+      this.serviceType,
+      this.serviceName});
 
   @override
-  _NsdHostState createState() => _NsdHostState();
+  _MusyncHostState createState() => _MusyncHostState();
 }
 
-class _NsdHostState extends State<NsdHost> {
+class _MusyncHostState extends State<MusyncHost> {
   NetworkDiscovery nsdHost;
+  SpotifyService _spotifyService;
 
   @override
   void initState() {
     nsdHost = NetworkDiscovery();
+    _spotifyService = SpotifyService();
     //Passing NULL values for non-required fields takes default value
-    nsdHost.startAdvertise(deviceName: widget.deviceName, port: widget.port, serviceNameNSD: widget.serviceName, serviceTypeNSD: widget.serviceType);
+    nsdHost.startAdvertise(
+        deviceName: widget.deviceName,
+        port: widget.port,
+        serviceNameNSD: widget.serviceName,
+        serviceTypeNSD: widget.serviceType);
     super.initState();
   }
 
@@ -55,18 +69,14 @@ class _NsdHostState extends State<NsdHost> {
           title: Text("Service Host"),
           centerTitle: true,
         ),
-        body: Container(
-          padding: EdgeInsets.all(5.0),
-          child: Center(
-            child: Text("Service is being advertised"),
-          ),
-        ),
+        body: SpotifyPlayer(_spotifyService),
       ),
     );
   }
 
   @override
   void dispose() {
+    _spotifyService.logout();
     nsdHost.stopAdvertise();
     super.dispose();
   }

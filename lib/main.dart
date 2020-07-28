@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:musync/Pages/host.dart';
 import 'package:musync/Pages/client.dart';
-import 'package:musync/Pages/spotifyplayer.dart';
+import 'package:musync/spotifyservice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(statusBarColor: Colors.transparent));
+  SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(statusBarColor: Colors.transparent));
   runApp(MyApp());
 }
 
@@ -17,6 +18,9 @@ class MyApp extends StatelessWidget {
       title: 'Flutter NSD Service',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        appBarTheme: AppBarTheme(
+            elevation: 0.0,
+        ),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: Home(),
@@ -33,6 +37,7 @@ class _HomeState extends State<Home> {
   String deviceName;
   int port;
   SharedPreferences prefs;
+  SpotifyService spotifyService;
 
   @override
   void initState() {
@@ -53,9 +58,8 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
       appBar: AppBar(
-        title: Text("NSD Example App"),
+        title: Text("Musync"),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.settings),
@@ -70,32 +74,24 @@ class _HomeState extends State<Home> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             RaisedButton(
-              color: Colors.blue[300],
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => NsdHost(
+                    builder: (context) => MusyncHost(
                           deviceName: deviceName,
                           port: port,
                         )));
               },
               child: Text('Host'),
             ),
-            SizedBox(height: 50,),
+            SizedBox(
+              height: 100,
+            ),
             RaisedButton(
-              color: Colors.blue[300],
               onPressed: () {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) => NsdClient()));
               },
               child: Text('Client'),
-            ),
-            SizedBox(height: 50,),
-            RaisedButton(
-              color: Colors.blue[300],
-              onPressed: () async {
-                await getAuthenticationToken();
-              },
-              child: Text('Spotify'),
             ),
           ],
         ),
@@ -121,8 +117,8 @@ class _HomeState extends State<Home> {
                       TextFormField(
                         decoration: InputDecoration(labelText: "Device name"),
                         initialValue: deviceName,
-                        validator: (val){
-                          if(val.isEmpty) return "Device name cannot be empty";
+                        validator: (val) {
+                          if (val.isEmpty) return "Device name cannot be empty";
                           return null;
                         },
                         onSaved: (val) {
@@ -136,9 +132,10 @@ class _HomeState extends State<Home> {
                       TextFormField(
                         decoration: InputDecoration(labelText: "Service port"),
                         initialValue: port.toString(),
-                        keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
-                        validator: (val){
-                          if(val.isEmpty) return "Port cannot be empty";
+                        keyboardType: TextInputType.numberWithOptions(
+                            signed: false, decimal: false),
+                        validator: (val) {
+                          if (val.isEmpty) return "Port cannot be empty";
                           return null;
                         },
                         onSaved: (val) {
@@ -152,7 +149,7 @@ class _HomeState extends State<Home> {
                       RaisedButton(
                         child: Text("Save"),
                         onPressed: () {
-                          if(_formKey.currentState.validate()){
+                          if (_formKey.currentState.validate()) {
                             _formKey.currentState.save();
                             Navigator.pop(context);
                           }

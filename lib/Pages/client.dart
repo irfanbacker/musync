@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:musync/nsd_service.dart';
 
 class NsdClient extends StatefulWidget {
-  String serviceType;
-  String serviceName;
+  final String serviceType;
+  final String serviceName;
 
   NsdClient({this.serviceName, this.serviceType});
 
