@@ -21,7 +21,6 @@ class _MusyncHostState extends State<MusyncHost> {
   @override
   void initState() {
     nsdHost = NetworkDiscovery();
-    _spotifyService = SpotifyService();
     //Passing NULL values for non-required fields takes default value
     nsdHost.startAdvertise(
         deviceName: Provider.of<Prefs>(context, listen: false).deviceName,
@@ -29,6 +28,33 @@ class _MusyncHostState extends State<MusyncHost> {
         serviceNameNSD: widget.serviceName,
     );
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => initSpotify());
+  }
+
+
+  void initSpotify() async {
+    bool status=false;
+    if (Provider.of<SpotifyService>(context, listen: false).authToken == null)
+      status = await Provider.of<SpotifyService>(context, listen: false)
+          .getAuthenticationToken();
+    if (status == false){
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Authentication Error"),
+            content: Text("The authentication has failed!"),
+            actions: <Widget>[
+              RaisedButton(
+                child: Text("Go Back"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          );
+        },
+      );
+      Navigator.of(context).pop();
+    }
   }
 
   Future<bool> showConfirmation() {
@@ -55,29 +81,26 @@ class _MusyncHostState extends State<MusyncHost> {
 
   @override
   Widget build(BuildContext context) {
+    _spotifyService = Provider.of<SpotifyService>(context);
     return WillPopScope(
       onWillPop: showConfirmation,
-      child: Provider(
-        create: (_) => SpotifyService(),
-        lazy: false,
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text("Service Host"),
-            centerTitle: true,
-          ),
-          body: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              Flexible(flex: 2,child: SpotifyPlayer()),
-              Flexible(
-                flex: 3,
-                child: Container(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Placeholder(),
-                ),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Music Host"),
+          centerTitle: true,
+        ),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            Flexible(flex: 2,child: SpotifyPlayer()),
+            Flexible(
+              flex: 3,
+              child: Container(
+                padding: const EdgeInsets.all(10.0),
+                child: Placeholder(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -85,7 +108,7 @@ class _MusyncHostState extends State<MusyncHost> {
 
   @override
   void dispose() {
-    _spotifyService.logout();
+    _spotifyService?.logout();
     nsdHost.stopAdvertise();
     super.dispose();
   }

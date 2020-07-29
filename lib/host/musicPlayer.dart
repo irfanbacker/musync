@@ -6,7 +6,6 @@ import 'package:spotify_sdk/models/player_state.dart';
 import 'package:provider/provider.dart';
 
 class SpotifyPlayer extends StatefulWidget {
-
   @override
   _SpotifyPlayerState createState() => _SpotifyPlayerState();
 }
@@ -14,13 +13,6 @@ class SpotifyPlayer extends StatefulWidget {
 class _SpotifyPlayerState extends State<SpotifyPlayer> {
   SpotifyService _spotifyService;
   bool _isConnected = false;
-
-  @override
-  void initState() {
-    if (Provider.of<SpotifyService>(context, listen: false).authToken == null)
-      Provider.of<SpotifyService>(context, listen: false).getAuthenticationToken();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +28,29 @@ class _SpotifyPlayerState extends State<SpotifyPlayer> {
                 RaisedButton(
                     child: Text("Connect"),
                     onPressed: () async {
-                      bool res =
-                          await _spotifyService.connectToSpotify();
+                      bool res = await _spotifyService.connectToSpotify();
                       setState(() {
                         _isConnected = res;
                       });
+                      if (!res)
+                        Scaffold.of(context).showSnackBar(SnackBar(
+                            backgroundColor: Colors.redAccent,
+                            content: Wrap(
+                              alignment: WrapAlignment.center,
+                              children: <Widget>[
+                                Text(
+                                  "Connection Failed!",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16.0),
+                                ),
+                                Text(
+                                  "Check your Internet connection and make sure Spotify is installed",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            )));
                     }),
                 RaisedButton(
                   child: Text("Logout"),
@@ -70,7 +80,6 @@ class _SpotifyPlayerState extends State<SpotifyPlayer> {
 }
 
 class SpotifyPlayerInterface extends StatefulWidget {
-
   @override
   _SpotifyPlayerInterfaceState createState() => _SpotifyPlayerInterfaceState();
 }
@@ -122,7 +131,14 @@ class _SpotifyPlayerInterfaceState extends State<SpotifyPlayerInterface> {
                       ],
                     ),
                     Wrap(
-                      children: [Text(playerState.track==null ? "": playerState.track.name, textAlign: TextAlign.center,)],
+                      children: [
+                        Text(
+                          playerState.track == null
+                              ? ""
+                              : playerState.track.name,
+                          textAlign: TextAlign.center,
+                        )
+                      ],
                     ),
                     Text(
                       playerState.track.artist.name == null
@@ -136,7 +152,9 @@ class _SpotifyPlayerInterfaceState extends State<SpotifyPlayerInterface> {
                         builder: (context) {
                           return PlayerTimer(
                               playerState.playbackPosition,
-                              playerState.track==null ? null: playerState.track.duration,
+                              playerState.track == null
+                                  ? null
+                                  : playerState.track.duration,
                               !playerState.isPaused);
                         }),
                   ],
@@ -153,6 +171,7 @@ class PlayerTimer extends StatefulWidget {
   final bool isPlaying;
 
   PlayerTimer(this.currentTime, this.endTime, this.isPlaying);
+
   @override
   _PlayerTimerState createState() => _PlayerTimerState();
 }
@@ -164,10 +183,9 @@ class _PlayerTimerState extends State<PlayerTimer> {
 
   @override
   void initState() {
-    if(widget.endTime == null){
+    if (widget.endTime == null) {
       _time = null;
-    }
-    else{
+    } else {
       _time = widget.currentTime;
       startTimer();
     }
@@ -180,7 +198,7 @@ class _PlayerTimerState extends State<PlayerTimer> {
       period,
       (Timer timer) => setState(
         () {
-          if (_time+100 > widget.endTime) {
+          if (_time + 100 > widget.endTime) {
             _time = widget.endTime;
             timer.cancel();
           } else {
@@ -199,7 +217,7 @@ class _PlayerTimerState extends State<PlayerTimer> {
 
   @override
   Widget build(BuildContext context) {
-    if(_time==null){
+    if (_time == null) {
       return Column(
         children: <Widget>[
           Row(
@@ -259,22 +277,25 @@ class _PlayerTimerState extends State<PlayerTimer> {
           value: widget.isPlaying
               ? _time.toDouble()
               : widget.currentTime.toDouble(),
-          onChanged: (change){
+          onChanged: (change) {
             setState(() {
               _time = change.toInt();
             });
           },
-          onChangeStart: (value){
+          onChangeStart: (value) {
             setState(() {
               _changeInit = value.toInt();
             });
           },
           onChangeEnd: (value) async {
-            bool status = await Provider.of<SpotifyService>(context, listen: false).playerSeekTo(value.toInt());
-            if(!status){
+            bool status =
+                await Provider.of<SpotifyService>(context, listen: false)
+                    .playerSeekTo(value.toInt());
+            if (!status) {
               setState(() {
                 _time = _changeInit;
-                Scaffold.of(context).showSnackBar(SnackBar(content: Text("Seek track error!")));
+                Scaffold.of(context)
+                    .showSnackBar(SnackBar(content: Text("Seek track error!")));
               });
             }
           },

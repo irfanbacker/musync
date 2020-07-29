@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:musync/host/host.dart';
 import 'package:musync/client/client.dart';
 import 'package:musync/sharedPrefs.dart';
+import 'package:musync/spotifyservice.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -83,7 +84,12 @@ class _HomeState extends State<Home> {
             RaisedButton(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => MusyncHost(),
+                  builder: (context) {
+                    return Provider(
+                      create: (_) => SpotifyService(),
+                        child: MusyncHost(),
+                    );
+                  },
                 ));
               },
               child: Text('Host'),
