@@ -14,22 +14,24 @@ class SpotifyService {
   String get redirectURL => _redirectURL;
   String get authToken => _authToken;
 
-  Future<void> getAuthenticationToken() async {
+  Future<bool> getAuthenticationToken() async {
     await DotEnv().load('.env');
     _clientID = DotEnv().env['CLIENT_ID'];
     _redirectURL = DotEnv().env['REDIRECT_URL'];
+    bool status = false;
     try {
       _authToken = await SpotifySdk.getAuthenticationToken(
           clientId: _clientID,
           redirectUrl: _redirectURL,
           scope: "app-remote-control, user-modify-playback-state, user-read-currently-playing"
       );
-      print("Got a token: $_authToken");
+      status = true;
     } on PlatformException catch (e) {
       print("${e.code}, message: ${e.message}");
     } on MissingPluginException {
       print("Function not implemented");
     }
+    return status;
   }
 
   Future<bool> connectToSpotify() async {
@@ -73,6 +75,22 @@ class SpotifyService {
     else print("Not connected!");
   }
 
+  Future<bool> playerSeekTo(int value) async {
+    bool status = false;
+    if(_isConnected){
+      try{
+        await SpotifySdk.seekTo(positionedMilliseconds: value);
+        status=true;
+      } on PlatformException catch(e){
+        print("${e.code}, message: ${e.message}");
+      } on MissingPluginException {
+        print("Function not implemented");
+      }
+    }
+    else print("Not connected!");
+    return status;
+  }
+
   Stream<PlayerContext> subscribePlayerContext() {
     if(_isConnected){
       try{
@@ -84,6 +102,7 @@ class SpotifyService {
       }
     }
     else print("Not connected!");
+    return null;
   }
 
   Future<bool> logout() async {

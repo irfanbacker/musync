@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:musync/Pages/host.dart';
-import 'package:musync/Pages/client.dart';
-import 'package:musync/spotifyservice.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:musync/host/host.dart';
+import 'package:musync/client/client.dart';
+import 'package:musync/sharedPrefs.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
@@ -14,16 +14,41 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter NSD Service',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        appBarTheme: AppBarTheme(
+    return Provider(
+      create: (_) => Prefs(),
+      lazy: false,
+      child: MaterialApp(
+        title: 'MuSync',
+        theme: Theme.of(context).copyWith(
+          cardColor: Colors.grey[300],
+          primaryColor: Colors.amber,
+          appBarTheme: AppBarTheme(
             elevation: 0.0,
+            color: Colors.amber[900],
+          ),
+          buttonTheme: ThemeData.dark().buttonTheme.copyWith(
+                buttonColor: Colors.amber[900],
+              ),
+          visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        darkTheme: ThemeData.dark().copyWith(
+          appBarTheme: AppBarTheme(
+            elevation: 0.0,
+            color: Colors.black45,
+            textTheme:
+                ThemeData.dark().textTheme.apply(bodyColor: Colors.amberAccent),
+            iconTheme:
+                ThemeData.dark().iconTheme.copyWith(color: Colors.amberAccent),
+          ),
+          buttonTheme: ThemeData.dark().buttonTheme.copyWith(
+                buttonColor: Colors.amber[900],
+                textTheme: ButtonTextTheme.primary,
+              ),
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        themeMode: ThemeMode.dark,
+        home: Home(),
       ),
-      home: Home(),
     );
   }
 }
@@ -34,32 +59,14 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  String deviceName;
-  int port;
-  SharedPreferences prefs;
-  SpotifyService spotifyService;
-
-  @override
-  void initState() {
-    initSharedPrefs();
-    super.initState();
-  }
-
-  void initSharedPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-    loadSharedPrefs();
-  }
-
-  void loadSharedPrefs() {
-    deviceName = prefs.getString("deviceName") ?? "Device1";
-    port = prefs.getInt("port") ?? 1819;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Musync"),
+        title: Text(
+          "MuSync",
+          style: TextStyle(fontSize: 20.0),
+        ),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.settings),
@@ -76,10 +83,8 @@ class _HomeState extends State<Home> {
             RaisedButton(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => MusyncHost(
-                          deviceName: deviceName,
-                          port: port,
-                        )));
+                  builder: (context) => MusyncHost(),
+                ));
               },
               child: Text('Host'),
             ),
@@ -88,8 +93,8 @@ class _HomeState extends State<Home> {
             ),
             RaisedButton(
               onPressed: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) => NsdClient()));
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => MusyncClient()));
               },
               child: Text('Client'),
             ),
@@ -116,32 +121,33 @@ class _HomeState extends State<Home> {
                     children: <Widget>[
                       TextFormField(
                         decoration: InputDecoration(labelText: "Device name"),
-                        initialValue: deviceName,
+                        initialValue: Provider.of<Prefs>(context).deviceName,
                         validator: (val) {
                           if (val.isEmpty) return "Device name cannot be empty";
                           return null;
                         },
-                        onSaved: (val) {
-                          deviceName = val;
-                          prefs.setString("deviceName", val);
-                        },
+                        onSaved: (val) => Provider.of<Prefs>(
+                          context,
+                          listen: false,
+                        ).setDeviceName(val),
                       ),
                       SizedBox(
                         height: 5,
                       ),
                       TextFormField(
                         decoration: InputDecoration(labelText: "Service port"),
-                        initialValue: port.toString(),
+                        initialValue:
+                            Provider.of<Prefs>(context).port.toString(),
                         keyboardType: TextInputType.numberWithOptions(
                             signed: false, decimal: false),
                         validator: (val) {
                           if (val.isEmpty) return "Port cannot be empty";
                           return null;
                         },
-                        onSaved: (val) {
-                          port = int.parse(val);
-                          prefs.setInt("port", int.parse(val));
-                        },
+                        onSaved: (val) => Provider.of<Prefs>(
+                          context,
+                          listen: false,
+                        ).setPort(int.parse(val)),
                       ),
                       SizedBox(
                         height: 5,

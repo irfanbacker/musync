@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:musync/nsd_service.dart';
 
-class NsdClient extends StatefulWidget {
+class MusyncClient extends StatefulWidget {
   final String serviceType;
   final String serviceName;
 
-  NsdClient({this.serviceName, this.serviceType});
+  MusyncClient({this.serviceName, this.serviceType});
 
   @override
-  _NsdClientState createState() => _NsdClientState();
+  _MusyncClientState createState() => _MusyncClientState();
 }
 
-class _NsdClientState extends State<NsdClient> {
+class _MusyncClientState extends State<MusyncClient> {
   bool _isRefresh;
   NetworkDiscovery nsdClient;
   List<HostInfo> infoList;

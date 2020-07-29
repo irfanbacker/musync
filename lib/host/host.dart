@@ -1,21 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:musync/host/musicPlayer.dart';
 import 'package:musync/nsd_service.dart';
+import 'package:musync/sharedPrefs.dart';
 import 'package:musync/spotifyservice.dart';
-import 'package:musync/widgets/musicPlayer.dart';
+import 'package:provider/provider.dart';
 
 class MusyncHost extends StatefulWidget {
-  final String deviceName;
-  final int port;
-  final String serviceType;
-  final String serviceName;
-
-  MusyncHost(
-      {@required this.deviceName,
-      @required this.port,
-      this.serviceType,
-      this.serviceName});
+  final String serviceName = "io.irfan.NSD.musync";
 
   @override
   _MusyncHostState createState() => _MusyncHostState();
@@ -31,10 +24,10 @@ class _MusyncHostState extends State<MusyncHost> {
     _spotifyService = SpotifyService();
     //Passing NULL values for non-required fields takes default value
     nsdHost.startAdvertise(
-        deviceName: widget.deviceName,
-        port: widget.port,
+        deviceName: Provider.of<Prefs>(context, listen: false).deviceName,
+        port: Provider.of<Prefs>(context, listen: false).port,
         serviceNameNSD: widget.serviceName,
-        serviceTypeNSD: widget.serviceType);
+    );
     super.initState();
   }
 
@@ -46,11 +39,11 @@ class _MusyncHostState extends State<MusyncHost> {
           title: Text("Are you sure?"),
           content: Text("The Host service will be stopped"),
           actions: <Widget>[
-            OutlineButton(
+            RaisedButton(
               child: Text("Yes"),
               onPressed: () => Navigator.of(context).pop(true),
             ),
-            OutlineButton(
+            RaisedButton(
               child: Text("No"),
               onPressed: () => Navigator.of(context).pop(false),
             )
@@ -64,12 +57,28 @@ class _MusyncHostState extends State<MusyncHost> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: showConfirmation,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Service Host"),
-          centerTitle: true,
+      child: Provider(
+        create: (_) => SpotifyService(),
+        lazy: false,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text("Service Host"),
+            centerTitle: true,
+          ),
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Flexible(flex: 2,child: SpotifyPlayer()),
+              Flexible(
+                flex: 3,
+                child: Container(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Placeholder(),
+                ),
+              ),
+            ],
+          ),
         ),
-        body: SpotifyPlayer(_spotifyService),
       ),
     );
   }
