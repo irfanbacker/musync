@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:musync/nsd_service.dart';
+import 'package:musync/services/nsd_service.dart';
 
 class MusyncClient extends StatefulWidget {
-  final String serviceType;
-  final String serviceName;
+  final String serviceName = "io.irfan.NSD.musync";
 
-  MusyncClient({this.serviceName, this.serviceType});
+  MusyncClient();
 
   @override
   _MusyncClientState createState() => _MusyncClientState();
@@ -21,9 +20,8 @@ class _MusyncClientState extends State<MusyncClient> {
     _isRefresh = true;
     nsdClient = NetworkDiscovery();
     nsdClient.startDiscovery(
-        serviceNameNSD: widget.serviceName,
-        serviceTypeNSD:
-            widget.serviceType); //Passing NULL values takes default value
+      serviceNameNSD: widget.serviceName,
+    ); //Passing NULL values takes default value
     super.initState();
     infoList = nsdClient.hostsList;
   }
@@ -36,11 +34,11 @@ class _MusyncClientState extends State<MusyncClient> {
           title: Text("Are you sure?"),
           content: Text("The discover service will be stopped"),
           actions: <Widget>[
-            OutlineButton(
+            RaisedButton(
               child: Text("Yes"),
               onPressed: () => Navigator.of(context).pop(true),
             ),
-            OutlineButton(
+            RaisedButton(
               child: Text("No"),
               onPressed: () => Navigator.of(context).pop(false),
             )
@@ -60,7 +58,7 @@ class _MusyncClientState extends State<MusyncClient> {
 
   @override
   Widget build(BuildContext context) {
-    if(_isRefresh) refreshList();
+    if (_isRefresh) refreshList();
     return WillPopScope(
       onWillPop: showConfirmation,
       child: Scaffold(

@@ -25,6 +25,7 @@ class SpotifyService {
           redirectUrl: _redirectURL,
           scope: "app-remote-control, user-modify-playback-state, user-read-currently-playing"
       );
+      print(_authToken);
       status = true;
     } on PlatformException catch (e) {
       print("${e.code}, message: ${e.message}");
@@ -47,6 +48,10 @@ class SpotifyService {
 
   Stream<PlayerState> getPlayerStateStream() {
     return SpotifySdk.subscribePlayerState();
+  }
+
+  Future<void> playUri(String uri) async {
+    await SpotifySdk.play(spotifyUri: uri);
   }
 
   Future<void> resumePlayback() async {

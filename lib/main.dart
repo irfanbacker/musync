@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:musync/host/host.dart';
 import 'package:musync/client/client.dart';
-import 'package:musync/sharedPrefs.dart';
-import 'package:musync/spotifyservice.dart';
+import 'package:musync/services/sharedPrefs.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -21,6 +20,10 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'MuSync',
         theme: Theme.of(context).copyWith(
+          accentColor: Colors.amber[900],
+          floatingActionButtonTheme: Theme.of(context)
+              .floatingActionButtonTheme
+              .copyWith(backgroundColor: Colors.amber[900]),
           cardColor: Colors.grey[300],
           primaryColor: Colors.amber,
           appBarTheme: AppBarTheme(
@@ -33,6 +36,10 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         darkTheme: ThemeData.dark().copyWith(
+          accentColor: Colors.amberAccent,
+          floatingActionButtonTheme: ThemeData.dark()
+              .floatingActionButtonTheme
+              .copyWith(backgroundColor: Colors.amberAccent),
           appBarTheme: AppBarTheme(
             elevation: 0.0,
             color: Colors.black45,
@@ -82,15 +89,10 @@ class _HomeState extends State<Home> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             RaisedButton(
+              elevation: 0.0,
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) {
-                    return Provider(
-                      create: (_) => SpotifyService(),
-                        child: MusyncHost(),
-                    );
-                  },
-                ));
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => MusyncHost()));
               },
               child: Text('Host'),
             ),
@@ -98,6 +100,7 @@ class _HomeState extends State<Home> {
               height: 100,
             ),
             RaisedButton(
+              elevation: 0.0,
               onPressed: () {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => MusyncClient()));

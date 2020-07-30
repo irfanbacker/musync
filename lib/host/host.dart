@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:musync/client/spotifySearch.dart';
 import 'package:musync/host/musicPlayer.dart';
-import 'package:musync/nsd_service.dart';
-import 'package:musync/sharedPrefs.dart';
-import 'package:musync/spotifyservice.dart';
+import 'package:musync/services/nsd_service.dart';
+import 'package:musync/services/sharedPrefs.dart';
+import 'package:musync/services/spotifyservice.dart';
 import 'package:provider/provider.dart';
 
 class MusyncHost extends StatefulWidget {
@@ -21,31 +22,32 @@ class _MusyncHostState extends State<MusyncHost> {
   @override
   void initState() {
     nsdHost = NetworkDiscovery();
+    _spotifyService = SpotifyService();
+    initSpotify();
     //Passing NULL values for non-required fields takes default value
     nsdHost.startAdvertise(
-        deviceName: Provider.of<Prefs>(context, listen: false).deviceName,
-        port: Provider.of<Prefs>(context, listen: false).port,
-        serviceNameNSD: widget.serviceName,
+      deviceName: Provider.of<Prefs>(context, listen: false).deviceName,
+      port: Provider.of<Prefs>(context, listen: false).port,
+      serviceNameNSD: widget.serviceName,
     );
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => initSpotify());
   }
 
-
   void initSpotify() async {
-    bool status=false;
-    if (Provider.of<SpotifyService>(context, listen: false).authToken == null)
-      status = await Provider.of<SpotifyService>(context, listen: false)
-          .getAuthenticationToken();
-    if (status == false){
+    bool status = false;
+    if (_spotifyService.authToken == null)
+      status = await _spotifyService.getAuthenticationToken();
+    if (status != true) {
       await showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
             title: Text("Authentication Error"),
             content: Text("The authentication has failed!"),
             actions: <Widget>[
               RaisedButton(
+                elevation: 0.0,
                 child: Text("Go Back"),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -66,10 +68,12 @@ class _MusyncHostState extends State<MusyncHost> {
           content: Text("The Host service will be stopped"),
           actions: <Widget>[
             RaisedButton(
+              elevation: 0.0,
               child: Text("Yes"),
               onPressed: () => Navigator.of(context).pop(true),
             ),
             RaisedButton(
+              elevation: 0.0,
               child: Text("No"),
               onPressed: () => Navigator.of(context).pop(false),
             )
@@ -81,26 +85,40 @@ class _MusyncHostState extends State<MusyncHost> {
 
   @override
   Widget build(BuildContext context) {
-    _spotifyService = Provider.of<SpotifyService>(context);
     return WillPopScope(
       onWillPop: showConfirmation,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Music Host"),
-          centerTitle: true,
-        ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Flexible(flex: 2,child: SpotifyPlayer()),
-            Flexible(
-              flex: 3,
-              child: Container(
-                padding: const EdgeInsets.all(10.0),
-                child: Placeholder(),
+      child: Provider<SpotifyService>.value(
+        value: _spotifyService,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text("Music Host"),
+            centerTitle: true,
+          ),
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Flexible(flex: 2, child: SpotifyLayout()),
+              Flexible(
+                flex: 3,
+                child: Container(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    children: <Widget>[
+                      RaisedButton(
+                        elevation: 0.0,
+                        child: Text("Select song"),
+                        onPressed: () async {
+                          String uri = await showSearch(context: context, delegate: SpotifySearch(token: this._spotifyService.authToken));
+                          await _spotifyService.playUri(uri);
+                        },
+                      ),
+                      Expanded(child: Container()),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
