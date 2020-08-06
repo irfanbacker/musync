@@ -85,8 +85,29 @@ class SpotifyPlayerInterface extends StatefulWidget {
   _SpotifyPlayerInterfaceState createState() => _SpotifyPlayerInterfaceState();
 }
 
-class _SpotifyPlayerInterfaceState extends State<SpotifyPlayerInterface> {
+class _SpotifyPlayerInterfaceState extends State<SpotifyPlayerInterface> with WidgetsBindingObserver{
   SpotifyService _spotifyService;
+
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if(state == AppLifecycleState.resumed){
+      setState(() {});
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +172,7 @@ class _SpotifyPlayerInterfaceState extends State<SpotifyPlayerInterface> {
                     Builder(
                         key: Key(playerState.playbackPosition.toString()),
                         builder: (context) {
+                          playerState =snapshot.data;
                           return PlayerTimer(
                               playerState.playbackPosition,
                               playerState.track == null

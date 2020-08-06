@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:musync/services/nsd_service.dart';
+import 'package:bonsoir/bonsoir.dart';
+import 'package:musync/models/hostinfo.dart';
 
 class MusyncClient extends StatefulWidget {
-  final String serviceName = "io.irfan.NSD.musync";
-
-  MusyncClient();
 
   @override
   _MusyncClientState createState() => _MusyncClientState();
@@ -12,18 +10,42 @@ class MusyncClient extends StatefulWidget {
 
 class _MusyncClientState extends State<MusyncClient> {
   bool _isRefresh;
-  NetworkDiscovery nsdClient;
-  List<HostInfo> infoList;
+  BonsoirDiscovery nsdClient;
+  List<HostInfo> hostsList;
 
   @override
   void initState() {
+    hostsList=[];
     _isRefresh = true;
-    nsdClient = NetworkDiscovery();
-    nsdClient.startDiscovery(
-      serviceNameNSD: widget.serviceName,
-    ); //Passing NULL values takes default value
+    nsdClient = BonsoirDiscovery(type: '_musync._tcp');
+    startDiscovery();
     super.initState();
-    infoList = nsdClient.hostsList;
+  }
+
+  void startDiscovery() async{
+    await nsdClient.ready;
+    await nsdClient.start();
+    nsdClient.eventStream.listen((event) {
+      if (event.type == BonsoirDiscoveryEventType.DISCOVERY_SERVICE_FOUND) {
+        print("NEW FOUND: "+event.service.toString());
+        HostInfo host = HostInfo(event.service.name, event.service.ip, event.service.port);
+        if (this._checkHostExists(host) == -1) this.hostsList.add(host);
+      } else if (event.type == BonsoirDiscoveryEventType.DISCOVERY_SERVICE_LOST) {
+        print("LOST: "+event.service.toString());
+        HostInfo host = HostInfo(event.service.name, event.service.ip, event.service.port);
+        int p = this._checkHostExists(host);
+        if (p != -1) this.hostsList.removeAt(p);
+      }
+    });
+  }
+
+  int _checkHostExists(HostInfo host) {
+    for (var i = 0; i < hostsList.length; ++i) {
+      if ((hostsList[i].name == host.name) &&
+          (hostsList[i].host == host.host) &&
+          (hostsList[i].port == host.port)) return i;
+    }
+    return -1;
   }
 
   Future<bool> showConfirmation() {
@@ -34,11 +56,11 @@ class _MusyncClientState extends State<MusyncClient> {
           title: Text("Are you sure?"),
           content: Text("The discover service will be stopped"),
           actions: <Widget>[
-            RaisedButton(
+            FlatButton(
               child: Text("Yes"),
               onPressed: () => Navigator.of(context).pop(true),
             ),
-            RaisedButton(
+            FlatButton(
               child: Text("No"),
               onPressed: () => Navigator.of(context).pop(false),
             )
@@ -52,7 +74,6 @@ class _MusyncClientState extends State<MusyncClient> {
     await Future.delayed(Duration(seconds: 3));
     setState(() {
       _isRefresh = false;
-      infoList = nsdClient.hostsList;
     });
   }
 
@@ -77,20 +98,20 @@ class _MusyncClientState extends State<MusyncClient> {
             ? Center(child: CircularProgressIndicator())
             : Container(
                 padding: EdgeInsets.all(5.0),
-                child: infoList.isEmpty
+                child: (hostsList==null)||(hostsList.isEmpty)
                     ? Center(
                         child: Text("No Hosts Found!"),
                       )
                     : ListView.builder(
-                        itemCount: infoList.length,
+                        itemCount: hostsList.length,
                         itemBuilder: (context, index) {
                           return Card(
                             child: ListTile(
-                              leading: Icon(Icons.phone_android),
-                              title: Text(infoList[index].name),
-                              subtitle: Text(infoList[index].host +
+                              leading: Icon(Icons.devices),
+                              title: Text(hostsList[index].name),
+                              subtitle: Text(hostsList[index].host +
                                   " : " +
-                                  infoList[index].port.toString()),
+                                  hostsList[index].port.toString()),
                             ),
                           );
                         }),
@@ -101,7 +122,7 @@ class _MusyncClientState extends State<MusyncClient> {
 
   @override
   void dispose() {
-    nsdClient.stopDiscovery();
+    nsdClient.stop();
     super.dispose();
   }
 }

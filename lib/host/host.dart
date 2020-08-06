@@ -3,34 +3,38 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:musync/client/spotifySearch.dart';
 import 'package:musync/host/musicPlayer.dart';
-import 'package:musync/services/nsd_service.dart';
 import 'package:musync/services/sharedPrefs.dart';
 import 'package:musync/services/spotifyservice.dart';
 import 'package:provider/provider.dart';
+import 'package:bonsoir/bonsoir.dart';
 
 class MusyncHost extends StatefulWidget {
-  final String serviceName = "io.irfan.NSD.musync";
-
   @override
   _MusyncHostState createState() => _MusyncHostState();
 }
 
 class _MusyncHostState extends State<MusyncHost> {
-  NetworkDiscovery nsdHost;
+  BonsoirBroadcast nsdHost;
   SpotifyService _spotifyService;
 
   @override
   void initState() {
-    nsdHost = NetworkDiscovery();
+    nsdHost = BonsoirBroadcast(
+      service: BonsoirService(
+        name: Provider.of<Prefs>(context, listen: false).deviceName,
+        type: '_musync._tcp',
+        port: Provider.of<Prefs>(context, listen: false).port,
+      ),
+    );
     _spotifyService = SpotifyService();
     initSpotify();
-    //Passing NULL values for non-required fields takes default value
-    nsdHost.startAdvertise(
-      deviceName: Provider.of<Prefs>(context, listen: false).deviceName,
-      port: Provider.of<Prefs>(context, listen: false).port,
-      serviceNameNSD: widget.serviceName,
-    );
+    serviceBroadcast();
     super.initState();
+  }
+
+  void serviceBroadcast() async {
+    await nsdHost.ready;
+    await nsdHost.start();
   }
 
   void initSpotify() async {
@@ -46,8 +50,7 @@ class _MusyncHostState extends State<MusyncHost> {
             title: Text("Authentication Error"),
             content: Text("The authentication has failed!"),
             actions: <Widget>[
-              RaisedButton(
-                elevation: 0.0,
+              FlatButton(
                 child: Text("Go Back"),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -67,13 +70,11 @@ class _MusyncHostState extends State<MusyncHost> {
           title: Text("Are you sure?"),
           content: Text("The Host service will be stopped"),
           actions: <Widget>[
-            RaisedButton(
-              elevation: 0.0,
+            FlatButton(
               child: Text("Yes"),
               onPressed: () => Navigator.of(context).pop(true),
             ),
-            RaisedButton(
-              elevation: 0.0,
+            FlatButton(
               child: Text("No"),
               onPressed: () => Navigator.of(context).pop(false),
             )
@@ -108,7 +109,10 @@ class _MusyncHostState extends State<MusyncHost> {
                         elevation: 0.0,
                         child: Text("Select song"),
                         onPressed: () async {
-                          String uri = await showSearch(context: context, delegate: SpotifySearch(token: this._spotifyService.authToken));
+                          String uri = await showSearch(
+                              context: context,
+                              delegate: SpotifySearch(
+                                  token: this._spotifyService.authToken));
                           await _spotifyService.playUri(uri);
                         },
                       ),
@@ -127,7 +131,7 @@ class _MusyncHostState extends State<MusyncHost> {
   @override
   void dispose() {
     _spotifyService?.logout();
-    nsdHost.stopAdvertise();
+    nsdHost.stop();
     super.dispose();
   }
 }
